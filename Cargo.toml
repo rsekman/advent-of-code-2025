@@ -3,6 +3,12 @@ name = "advent-of-code-2025"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "aoclib"
+path = "src/lib.rs"
+
 [dependencies]
+coordinates = "0.4.0"
 itertools = "0.14.0"
 nom = "7.0.0"
+num = "0.4.3"
