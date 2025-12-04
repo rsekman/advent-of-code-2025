@@ -1,4 +1,5 @@
-input/*
+input/
+examples/
 
 
 # Added by cargo
