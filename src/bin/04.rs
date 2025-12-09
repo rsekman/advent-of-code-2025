@@ -9,14 +9,15 @@ use nom::{
     character::complete::{char, newline},
     combinator::value,
     multi::{many1, separated_list1},
-    IResult,
+    IResult, Parser,
 };
 
 fn parse_code(input: &str) -> IResult<&str, Vec<Vec<bool>>> {
     separated_list1(
         newline,
         many1(alt((value(true, char('@')), value(false, char('.'))))),
-    )(input)
+    )
+    .parse(input)
 }
 
 fn accessible<'a>(grid: &'a Vec<Vec<bool>>) -> Vec<(usize, usize)> {

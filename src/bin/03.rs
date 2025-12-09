@@ -9,11 +9,11 @@ use nom::{
     character::complete::{anychar, newline, u32},
     combinator::{map_parser, recognize},
     multi::{many1, separated_list1},
-    IResult,
+    IResult, Parser,
 };
 
 fn parse_batteries(input: &str) -> IResult<&str, Vec<Vec<u32>>> {
-    separated_list1(newline, many1(map_parser(recognize(anychar), u32)))(input)
+    separated_list1(newline, many1(map_parser(recognize(anychar), u32))).parse(input)
 }
 
 fn max_joltage(bats: &Vec<u32>, n: u32) -> Option<u64> {

@@ -7,17 +7,17 @@ use nom::{
     character::complete::{char, newline, u64},
     multi::{many1, separated_list1},
     sequence::separated_pair,
-    IResult,
+    IResult, Parser,
 };
 
 type IngredientRange = (u64, u64);
 
 fn id_range(input: &str) -> IResult<&str, IngredientRange> {
-    separated_pair(u64, char('-'), u64)(input)
+    separated_pair(u64, char('-'), u64).parse(input)
 }
 
 fn ingredients(input: &str) -> IResult<&str, Vec<u64>> {
-    separated_list1(newline, u64)(input)
+    separated_list1(newline, u64).parse(input)
 }
 
 fn parse_input(input: &str) -> IResult<&str, (Vec<IngredientRange>, Vec<u64>)> {
@@ -25,7 +25,8 @@ fn parse_input(input: &str) -> IResult<&str, (Vec<IngredientRange>, Vec<u64>)> {
         separated_list1(newline, id_range),
         many1(newline),
         ingredients,
-    )(input)
+    )
+    .parse(input)
 }
 
 fn n_fresh(ranges: &Vec<IngredientRange>, ingredients: &Vec<u64>) -> usize {

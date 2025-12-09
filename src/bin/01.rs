@@ -10,7 +10,7 @@ use nom::{
     combinator::map,
     multi::separated_list1,
     sequence::preceded,
-    IResult,
+    IResult, Parser,
 };
 
 fn parse_code(input: &str) -> IResult<&str, Vec<i32>> {
@@ -20,7 +20,8 @@ fn parse_code(input: &str) -> IResult<&str, Vec<i32>> {
             preceded(char('R'), i32),
             map(preceded(char('L'), i32), |s| -s),
         )),
-    )(input)
+    )
+    .parse(input)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
