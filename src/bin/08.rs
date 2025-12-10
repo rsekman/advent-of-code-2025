@@ -84,6 +84,5 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("The circuit size after {max_connections} connections is {circuit_size}");
     println!("The distance to the wall is {dist}");
-
     return Ok(());
 }

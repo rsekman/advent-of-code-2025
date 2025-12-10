@@ -8,7 +8,7 @@ use nom::{
     combinator::value,
     multi::separated_list1,
     sequence::{delimited, separated_pair},
-    IResult,
+    IResult, Parser,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -21,11 +21,12 @@ fn parse_operator(input: &str) -> IResult<&str, Operation> {
     alt((
         value(Operation::Add, char('+')),
         value(Operation::Multiply, char('*')),
-    ))(input)
+    ))
+    .parse(input)
 }
 
 fn parse_operands(input: &str) -> IResult<&str, Vec<u64>> {
-    delimited(space0, separated_list1(space1, u64), space0)(input)
+    delimited(space0, separated_list1(space1, u64), space0).parse(input)
 }
 
 fn parse_input(input: &str) -> IResult<&str, (Vec<Vec<u64>>, Vec<Operation>)> {
@@ -33,7 +34,8 @@ fn parse_input(input: &str) -> IResult<&str, (Vec<Vec<u64>>, Vec<Operation>)> {
         separated_list1(newline, parse_operands),
         newline,
         delimited(space0, separated_list1(space1, parse_operator), space0),
-    )(input)
+    )
+    .parse(input)
 }
 
 fn parse_transposed(input: &str) -> IResult<&str, Vec<(Vec<u64>, Operation)>> {
@@ -44,7 +46,8 @@ fn parse_transposed(input: &str) -> IResult<&str, Vec<(Vec<u64>, Operation)>> {
             space0,
             parse_operator,
         ),
-    )(input)
+    )
+    .parse(input)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {

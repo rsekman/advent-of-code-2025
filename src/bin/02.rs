@@ -9,11 +9,11 @@ use nom::{
     character::complete::{char, u64},
     multi::separated_list1,
     sequence::separated_pair,
-    IResult,
+    IResult, Parser,
 };
 
 fn parse_ids(input: &str) -> IResult<&str, Vec<(u64, u64)>> {
-    separated_list1(char(','), separated_pair(u64, char('-'), u64))(input)
+    separated_list1(char(','), separated_pair(u64, char('-'), u64)).parse(input)
 }
 
 // Sum the invalid IDs between start and end, where an ID is invalid iff it its decimal
