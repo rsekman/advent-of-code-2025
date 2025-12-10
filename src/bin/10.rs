@@ -90,7 +90,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let answer: usize = machines.iter().map(bfs_lights).sum();
 
-    println!("Minimum number of preses: {answer}");
+    println!("Minimum number of presses to configure indicator lights: {answer}");
 
     return Ok(());
 }
