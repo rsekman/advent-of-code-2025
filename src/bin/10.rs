@@ -12,6 +12,10 @@ use nom::{
     IResult, Parser,
 };
 
+use itertools::Itertools;
+
+use microlp::{ComparisonOp, OptimizationDirection, Problem};
+
 struct Machine {
     lights: Vec<bool>,
     buttons: Vec<Vec<usize>>,
@@ -80,6 +84,23 @@ fn bfs_lights(m: &Machine) -> usize {
     0
 }
 
+fn optimize_joltage(machine: &Machine) -> f64 {
+    let mut p = Problem::new(OptimizationDirection::Minimize);
+    let vars = (0..machine.buttons.len())
+        .map(|_| p.add_integer_var(1.0, (0, i32::MAX)))
+        .collect_vec();
+    for (n, j) in machine.joltage_reqs.iter().enumerate() {
+        let lhs = machine
+            .buttons
+            .iter()
+            .enumerate()
+            .filter_map(|(m, v)| if v.iter().contains(&n) { Some(m) } else { None })
+            .map(|m| (vars[m], 1.0));
+        p.add_constraint(lhs, ComparisonOp::Eq, *j as f64);
+    }
+    p.solve().unwrap().objective()
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let stdin = std::io::stdin();
     let mut stdin = stdin.lock();
@@ -91,6 +112,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let answer: usize = machines.iter().map(bfs_lights).sum();
 
     println!("Minimum number of presses to configure indicator lights: {answer}");
+
+    let answer: f64 = machines.iter().map(optimize_joltage).sum();
+
+    println!("Minimum number of presses to satisfy joltage requirements: {answer}");
 
     return Ok(());
 }
