@@ -7,8 +7,10 @@ name = "advent-of-code-2025"
 version = "0.1.0"
 dependencies = [
  "coordinates",
+ "grid",
  "itertools",
  "microlp",
+ "ndarray",
  "nom",
  "num",
  "rayon",
@@ -60,6 +62,12 @@ name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
+
+[[package]]
+name = "grid"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9e2d4c0a8296178d8802098410ca05d86b17a10bb5ab559b3fb404c1f948220"
 
 [[package]]
 name = "itertools"
