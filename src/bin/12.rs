@@ -211,20 +211,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (_, (presents, problems)) =
         parse_input(&input).map_err(|e| format!("Invalid input: {e}"))?;
 
+    // Prune problems where there is not sufficient area even with perfect packing
+    let prune_infeasible = false;
+    // short-circuit when the problem is trivially solvable by putting each present in its
+    // own 3×3 box
+    let short_circuit_trivial = false;
     let answer = problems
         .into_par_iter()
-        // Prune problems where there is not sufficient area even with perfect packing
         .filter(|p| {
-            p.width * p.height
-                >= Iterator::zip(p.constraints.iter(), presents.iter().map(n_occupied))
-                    .map(|(c, n)| c * n)
-                    .sum()
+            !prune_infeasible
+                || p.width * p.height
+                    >= Iterator::zip(p.constraints.iter(), presents.iter().map(n_occupied))
+                        .map(|(c, n)| c * n)
+                        .sum()
         })
         .filter(|p| {
-            // short-circuit when the problem is trivially solvable by putting each present in its
-            // own 3×3 box
-            // (p.width / 3) * (p.height / 3) >= p.constraints.iter().sum() ||
-            pack(&presents, &p).is_ok()
+            (short_circuit_trivial && (p.width / 3) * (p.height / 3) >= p.constraints.iter().sum())
+                || pack(&presents, &p).is_ok()
         })
         .count();
 
