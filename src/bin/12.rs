@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::io::prelude::*;
+use std::time::Instant;
 
 use nom::{
     branch::alt,
@@ -183,7 +184,18 @@ fn pack(
         n_packing_constraints,
         n_packing_constraints + n_present_constraints
 );
-    prob.solve()
+    let now = Instant::now();
+    let out = prob.solve();
+    println!(
+        "Solved a {width}×{height} problem in {:6.2} s: {}",
+        now.elapsed().as_secs_f32(),
+        if out.is_ok() {
+            "feasible"
+        } else {
+            "infeasible"
+        }
+    );
+    out
 }
 
 fn n_occupied(Present(p): &Present) -> usize {
