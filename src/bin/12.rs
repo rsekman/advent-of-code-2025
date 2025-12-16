@@ -13,7 +13,7 @@ use nom::{
 
 use itertools::{iproduct, Itertools};
 
-use microlp::{ComparisonOp, OptimizationDirection, Problem, Solution};
+use good_lp::{constraint, default_solver, variable, variables, Solution, SolverModel};
 use ndarray::Array;
 
 use rayon::prelude::*;
@@ -122,25 +122,30 @@ fn pack(
         width,
         constraints,
     }: &PackingProblem,
-) -> Result<Solution, microlp::Error> {
-    let mut prob = Problem::new(OptimizationDirection::Minimize);
+) -> Result<Box<dyn Solution + 'static>, Box<dyn Error + 'static>> {
+    //let mut prob = Problem::new(OptimizationDirection::Minimize);
     let xmax = width.saturating_sub(2);
     let ymax = height.saturating_sub(2);
 
     // The variables in the problem are, for every type of present and every cell, a decision variable whether to place a present of that type with its top left corner there.
     // In an N×M grid this is only possible if (x, y) < (N-2, M-2) [zero-indexed].
     // First we rotate and reflect all the presents and count the number of types
+    let mut vars = variables! {};
     let dihedral: Vec<_> = presents.iter().map(rotate_and_reflect).collect();
     let n_presents = dihedral.iter().map(Vec::len).sum();
     // Now we can create the variables
+    let bool_var = || variable().integer().min(0).max(1);
     let placed = Array::from_shape_vec(
         (n_presents, xmax, ymax),
         iproduct![0..n_presents, 0..xmax, 0..ymax]
-            .map(|_| prob.add_binary_var(0.0))
+            .map(|_| vars.add(bool_var()))
             .collect(),
     )
     // This unwrap is safe because we control the shape of the array
     .unwrap();
+    let mut model = vars.minimise(0.0).using(default_solver);
+    model.set_parameter("log", "0");
+    //model.as_inner_mut().set_obj_sense(coin_cbc::Sense::Ignore);
 
     // The simplest constraints are the usage constraints
     //     \sum_{j ~ k} placed[j] = presents[k]
@@ -151,8 +156,9 @@ fn pack(
     let mut idx: usize = 0;
     for (n, class) in dihedral.iter().enumerate() {
         let lhs = iproduct![idx..(idx + class.len()), 0..(*width - 2), 0..(*height - 2)]
-            .map(|vidx| (placed[vidx], 1.0));
-        prob.add_constraint(lhs, ComparisonOp::Eq, constraints[n] as f64);
+            .map(|vidx| placed[vidx] * 1i32)
+            .sum::<good_lp::Expression>();
+        model.add_constraint(constraint!(lhs == constraints[n] as i32));
         idx += class.len();
     }
     let n_present_constraints = constraints.len();
@@ -165,13 +171,13 @@ fn pack(
         let lhs = iproduct![0..n_presents, 0..3, 0..3]
             .filter_map(|(k, u, v)| {
                 if u <= x && v <= y && x - u < xmax && y - v < ymax {
-                    Some((placed[(k, x - u, y - v)], presents[k].0[u][v] as u8 as f64))
+                    Some(placed[(k, x - u, y - v)] * (presents[k].0[u][v] as i32))
                 } else {
                     None
                 }
             })
-            .collect_vec();
-        prob.add_constraint(lhs, ComparisonOp::Le, 1.0);
+            .sum::<good_lp::Expression>();
+        model.add_constraint(constraint!(lhs <= 1i32));
     }
     let n_packing_constraints = height * width;
 
@@ -185,7 +191,7 @@ fn pack(
         n_packing_constraints + n_present_constraints
 );
     let now = Instant::now();
-    let out = prob.solve();
+    let out = model.solve();
     println!(
         "Solved a {width}×{height} problem in {:6.2} s: {}",
         now.elapsed().as_secs_f32(),
@@ -195,7 +201,8 @@ fn pack(
             "infeasible"
         }
     );
-    out
+    out.map(|s| Box::new(s) as Box<dyn Solution>)
+        .map_err(|e| Box::new(e) as Box<dyn Error>)
 }
 
 fn n_occupied(Present(p): &Present) -> usize {

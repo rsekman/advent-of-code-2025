@@ -12,6 +12,8 @@ path = "src/lib.rs"
 
 [dependencies]
 coordinates = "0.4.0"
+good_lp = { version = "1.14.2", default-features= false, features = ["coin_cbc"] }
+coin_cbc = { version = "*", default-features = false}
 grid = "1.0.0"
 itertools = "0.14.0"
 microlp = "0.2.11"
