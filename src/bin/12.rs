@@ -135,7 +135,7 @@ fn pack(
     let placed = Array::from_shape_vec(
         (n_presents, xmax, ymax),
         iproduct![0..n_presents, 0..xmax, 0..ymax]
-            .map(|_| prob.add_binary_var(1.0))
+            .map(|_| prob.add_binary_var(0.0))
             .collect(),
     )
     // This unwrap is safe because we control the shape of the array
