@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::io::prelude::*;
-use std::time::Instant;
+use std::thread::sleep;
+use std::time::{Duration, Instant};
 
 use nom::{
     branch::alt,
@@ -17,6 +18,8 @@ use good_lp::{constraint, default_solver, variable, variables, Solution, SolverM
 use ndarray::Array;
 
 use rayon::prelude::*;
+
+use rand::Rng;
 
 #[inline]
 fn cell(input: &str) -> IResult<&str, bool> {
@@ -144,7 +147,13 @@ fn pack(
     // This unwrap is safe because we control the shape of the array
     .unwrap();
     let mut model = vars.minimise(0.0).using(default_solver);
-    model.set_parameter("log", "0");
+    {
+        // workaround for coin-cbc not being *completely* thread safe: there's a race condition in
+        // parsing parameters. so we wait for a random duration
+        model.set_parameter("log", "0");
+        let mut rng = rand::rng();
+        sleep(Duration::from_millis(rng.random_range(0..=100)));
+    }
     //model.as_inner_mut().set_obj_sense(coin_cbc::Sense::Ignore);
 
     // The simplest constraints are the usage constraints
